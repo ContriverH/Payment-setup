@@ -34,20 +34,42 @@ var stripeHandler = StripeCheckout.configure({
         var cartItemContainer = document.getElementsByClassName('cart-items')[0]
         var cartRows = cartItemContainer.getElementsByClassName('cart-row')
         for (var i = 0; i < cartRows; i++) {
-            var carRow = carRows[i]
+            var cartRow = cartRows[i]
             var quantityElement = cartRow.getElementsByClassName('cart-quantity-input')[0]
             var quantity = quantityElement.value
+            var id = cartRow.dataset.itemId
+            items.push({
+                id: id,
+                quantity: quantity
+            })
         }
+        fetch('/purchase', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                stripeTokenId: token.id,
+                items: items
+            })
+        }).then(function (res) {
+            return res.json()
+        }).then(function (data) {
+            alert(data.message)
+            var cartItems = document.getElementsByClassName('cart-items')[0]
+            while (cartItems.hasChildNodes()) {
+                cartItems.removeChild(cartItems.firstChild)
+            }
+            updateCartTotal()
+        }).catch(function (err) {
+            console.error(err)
+        })
     }
 })
 
 function purchaseClicked() {
     // alert('Thank you for your purchase')
-    // var cartItems = document.getElementsByClassName('cart-items')[0]
-    // while (cartItems.hasChildNodes()) {
-    //     cartItems.removeChild(cartItems.firstChild)
-    // }
-    // updateCartTotal()
     var priceElement = document.getElementsByClassName('cart-total-price')[0];
     var price = parseFloat(priceElement.innerText.replace('$', '')) * 100;
     stripeHandler.open({
@@ -83,7 +105,7 @@ function addToCartClicked(event) {
 function addItemToCart(title, price, imageSrc, id) {
     var cartRow = document.createElement('div')
     cartRow.classList.add('cart-row')
-    carRow.dataset.itemId = id
+    cartRow.dataset.itemId = id
     var cartItems = document.getElementsByClassName('cart-items')[0]
     var cartItemNames = cartItems.getElementsByClassName('cart-item-title')
     for (var i = 0; i < cartItemNames.length; i++) {
